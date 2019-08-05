@@ -126,7 +126,7 @@ The next task for me was to create a Google map to show where a jobsite is locat
         var address = '@Model.Address @Model.State  @Model.Zip'
         geocoder.geocode({ 'address': address}, function (results, status) {   
             if (status == 'OK') {
-                map.setCenter(results[0].geomet```ry.location);
+                map.setCenter(results[0].geometry.location);
                 var marker = new google.maps.Marker({
                     map: map,
                     position: results[0].geometry.location
