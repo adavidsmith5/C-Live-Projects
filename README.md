@@ -98,3 +98,99 @@ var result = await UserManager.CreateAsync(user, model.Password);
  ```
  
  ![alt text](https://github.com/adavidsmith5/C-Live-Projects/blob/master/C%23_personalization_menu.png)
+
+<br />
+
+### Setting up a Google map for the location of a jobsite
+The next task for me was to create a Google map to show where a jobsite is located for the employee.
+
+
+```
+<script type="text/javascript">
+
+    $(document).ready(function () {
+        Initialize();
+    });
+    var geocoder = new google.maps.Geocoder();
+    // Where all the fun happens
+    function Initialize() {
+
+        var geocoder = new google.maps.Geocoder();
+        var latlng = new google.maps.LatLng(0, 45);
+        var mapOptions = {
+            zoom: 12,
+            center: latlng
+        }
+        google.maps.visualRefresh = true;
+        var map = new google.maps.Map(document.getElementById('jobSite_map_canvas'), mapOptions);
+        var address = '@Model.Address @Model.State  @Model.Zip'
+        geocoder.geocode({ 'address': address}, function (results, status) {   
+            if (status == 'OK') {
+                map.setCenter(results[0].geomet```ry.location);
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: results[0].geometry.location
+                });
+            } else {
+                alert('Geocode was not successful for the following reason: ' + status);
+            }
+        }); 
+    }
+</script>
+```
+
+### Verifying state, city, and zipcode when an admin is creating a new jobsite
+The final story I worked on in the sprint was checking that the admin was entering in correct information when setting up a new jobsite. First, I used the SmartyStreets API, but when we learned that it was very limited in the number of times we could call it per month, I had to find a new API to use for zipcode verification.
+```
+if (ModelState.IsValid)
+            {
+                string URL = "https://form-api.com";
+                string urlParameters = "/api/geo/country/zip?key=[my-api-key]country=US&zipcode=" + jobsite.Zip;
+
+                HttpClient client = new HttpClient();
+                client.BaseAddress = new Uri(URL);
+
+                // Add an Accept header for JSON format.
+                client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
+                // List data response.
+                HttpResponseMessage response = client.GetAsync(urlParameters).Result;  // Blocking call! Program will wait here until a response is received or a timeout occurs.
+                if (response.IsSuccessStatusCode)
+                {
+                    // Take in the response as a string, use deserialize to make it a dynamic object so that the data can be accessed easily. Test to see that the
+                    //given state from the form matches the city and state with the given zipcode.
+                    var data = response.Content.ReadAsStringAsync().Result;
+                    dynamic zipcodeResponse = JsonConvert.DeserializeObject(data);
+                    string state = zipcodeResponse.result.state;
+                    string city = zipcodeResponse.result.city;
+
+                    //Checking for both city and state matching the given information from the form based on the zipcode.
+                    //Because the API is taking the zipcode to get the information, this is how we can verify it.
+                    //Two notes: 1. some zip codes can cross state lines. I checked and they usually choose one state over
+                    //the other, so for very special circumstances this may need to be dealt with. 2. I am checking for both
+                    //city and state, and while the state shouldn't be an issue because it's a dropdown, the city needs to be spelled
+                    //correctly
+                    if (state == jobsite.State && city.ToLower() == jobsite.Town.ToLower())
+                    {
+                        db.JobSites.Add(jobsite);
+                        db.SaveChanges();
+                        return RedirectToAction("Index");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("Zip", "Please double check your city, state, and zipcode.");
+                    }
+
+                }
+                else
+                {
+                    Console.WriteLine("{0} ({1})", (int)response.StatusCode, response.ReasonPhrase);
+                }
+                //Dispose once all HttpClient calls are complete. This is not necessary if the containing object will be disposed of; for example in this case the HttpClient instance will be disposed automatically when the application terminates so the following call is superfluous.
+                client.Dispose();
+            }
+
+```
+
+
