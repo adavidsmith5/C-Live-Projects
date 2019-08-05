@@ -1,4 +1,4 @@
-# C-Live-Projects
+# CSharp-Live-Projects
 Final Projects for the Tech Academy using C#
 
 ## Introduction
