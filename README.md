@@ -1,2 +1,100 @@
 # C-Live-Projects
 Final Projects for the Tech Academy using C#
+
+## Introduction
+<br />
+
+In the final 4 weeks of The Tech Academy Software Developer Bootcamp I participated in two sprints using C# and the .NET framework. The first project was a Construction Management portal for a construction company to keep track of jobs, jobsites, and employees. The second project was a more general Employee Management application. In the first sprint, I learned what it was like to join a project that was near completion. This involved making sense of what was already there and utilizing it in code of my own to make it work. It was more focused on fine tuning aspects of the site and meeting the client's needs. For the second sprint, I was part of the beginning of the project and was involved in laying some of the groundwork for the project. We utilized MVC to create the application and I was involved in creating some of the models, adding Google maps to a view, and adding an API to a controller to validate user input. Through these projects I learned much about MVC and how he three parts work together. These were great experiences to see what it is like to work on a project in the real-world and have to work with requirements from the client and having deadlines to meet. I have learned many valuable skills for future projects.
+
+## Construction Management Portal
+<br />
+
+### Adding an Alert for Non-Standard Start Times
+Each job has a default start time for employees, but some days the job required workers to arrive earlier or later and we wanted to alert employees to that when it happens. 
+
+```
+if (shiftTimeNotDefault.HasNonDefaultShiftTime(job.JobNumber))
+{
+    //Display an alert symbol to let the user know there is something different about this
+    //schedule. When hovered over, it will give the user extra information about what kind
+    //of changes there are.
+    <a id="shiftAlert" href="#" title="Schedule Changes" data-html="true" data-toggle="popover" data-trigger="hover"
+       data-placement="top" data-content="@shiftTimeNotDefault.daysWithoutDefaultStartTime(job)">
+        <span class="glyphicon glyphicon-alert"></span>
+    </a>
+}
+```
+
+The alert also needed a message to inform them what days were different.
+
+```
+public string daysWithoutDefaultStartTime(Job job)
+        {
+            string message = "The following day(s) has/have different start time(s). <br />";
+            if(job.ShiftTimes.Monday != null)
+            {
+                message += "Monday: " + job.ShiftTimes.Monday + "<br />";
+            }
+            if (job.ShiftTimes.Tuesday != null)
+            {
+                message += "Tuesday: " + job.ShiftTimes.Tuesday + "<br />";
+            }
+            if (job.ShiftTimes.Wednesday != null)
+            {
+                message += "Wednesday: " + job.ShiftTimes.Wednesday + "<br />";
+            }
+            if (job.ShiftTimes.Thursday != null)
+            {
+                message += "Thursday: " + job.ShiftTimes.Thursday + "<br />";
+            }
+            if (job.ShiftTimes.Friday != null)
+            {
+                message += "Friday: " + job.ShiftTimes.Friday;
+            }
+            return message;
+        }
+```
+
+![alt text](https://github.com/adavidsmith5/C-Live-Projects/blob/master/C%23_alert_message.png)
+
+<br />
+
+## Employee Management Application
+
+<br />
+
+### Restricting account creation by email
+We wanted to allow people with the same name to register, but with the way the database is set up was to check for 
+username by default. This required a simple switch of using the email for the username and then creating a display
+name to store the person's actual name.
+
+```
+//This is storing the email as the user name so that two people with the same name
+//can still be registered. Instead, it will stop people from registering with the same
+//email. The display name will now becomde the person's name who is registering.
+var user = new ApplicationUser { UserName = model.Email, Email = model.Email, DisplayName = model.UserName };
+var result = await UserManager.CreateAsync(user, model.Password);
+```
+ Then it was simply a matter of showing an error for when users used the same email.
+ 
+ ```//This just shows the error for the email being duplicated instead of username
+ ModelState.AddModelError("", result.Errors.Last());
+ ```
+ ![alt text](https://github.com/adavidsmith5/C-Live-Projects/blob/master/C%23_email_verification_error.png)
+ 
+ 
+ ### Showing user name properly in the side menu when a user is logged in
+ After making the changes for using the email as the username, the display had to be changed to show the user's display name 
+ instead of their email once they were logged in.
+ 
+ ```
+ <li>
+    @{
+        var manager = new UserManager<ApplicationUser>(new UserStore<ApplicationUser>(new ApplicationDbContext()));
+        var currentUser = manager.FindById(User.Identity.GetUserId());
+     }
+     @Html.ActionLink("Hello " + currentUser.DisplayName + "!", "Index", "Manage", routeValues: null, htmlAttributes: new { title = "Manage" }}
+ </li>
+ ```
+ 
+ ![alt text](https://github.com/adavidsmith5/C-Live-Projects/blob/master/C%23_personalization_menu.png)
